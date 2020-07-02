@@ -50,10 +50,12 @@ public:
 
 class dotheJob : public Task {
 private:
-    string line;
-    Vector<table*> tableArray;
+    Vector<string> tableArray;
+    string *partiallySortedArray;
+    int startIndex;
+    int endIndex;
 public:
-    dotheJob(string l,Vector<table*> t);
+    dotheJob(Vector<string> t, string *psa, int s, int e);
     ~dotheJob();
     void run();
 };

@@ -1,8 +1,17 @@
-# Task-Scheduler-And-Custom-Vector
-Waiting an inspiration for the driver program though!
-- Under Construction of driver program (main)
-- Need to work on the threads.cpp as well
-- Changed the Makefile to check the vector who can also be modified/optimized
+# Project: Partial Order
+-   Create a main driver program
+    * which will store random strings from a bow (100 strings/bow.txt) to VECTORS(custom Vector.h file is the library) and display them.
+        * unorderedStrings.txt gets created to dispay the strings.
+    * those strings will be sent to threads (4 threads / 25 strings to each one of them in that case).
+    * threads will sort them to their alphabetical (ASCII) value.
+    * the results will be 4 ordered partitions of the initial file.
+        * partiallyOrderedStrings.txt gets created to dispay the strings' new order.
+# NOTE: The addition of a merge function could be a future add-on.
+
+- **Compilation & Execution**
+    * Compile: make
+    * Remove object files: make clean
+    * Run: ./run
 
 **Vector.h**
 This is the vector implementation header file. Class vector -of type template- has 4 constructors, whose calls depend on the arguments of the Vector function.

@@ -21,30 +21,30 @@ TaskQueue::~TaskQueue() {
     pthread_cond_destroy(&cond);
 }
 
-Task* TaskQueue::nextTask() {                                                   //lipsi epomenou task apo tin oura
+Task* TaskQueue::nextTask() {                                                   //get next task from the queue
     Task *nextTask = 0;
 
     pthread_mutex_lock(&mut);
 
-    while (tasks.empty()) {                                                     //oso i oura ton tasks einai adeia
-        pthread_cond_wait(&cond, &mut);                                         //to trexon nima pagonei (mexri na erthei kapoio task stin oura)
+    while (tasks.empty()) {                                                     //while task queue is empty
+        pthread_cond_wait(&cond, &mut);                                         //current thread waits(till task arrives)
     }
 
-    nextTask = tasks.front();                                                   //lipsi epomenou task
+    nextTask = tasks.front();                                                   //get next task
     tasks.pop();
     pthread_mutex_unlock(&mut);
 
     return nextTask;
 }
 
-void TaskQueue::addTask(Task *nextTask){                                        //prosthiki neou task stin oura
+void TaskQueue::addTask(Task *nextTask){                                        //add new task to the queue
     pthread_mutex_lock(&mut);
-    tasks.push(nextTask);                                                       //prosthiki task
-    pthread_cond_signal(&cond);                                                 //signal oti iparxei neo task
+    tasks.push(nextTask);                                                       //add task
+    pthread_cond_signal(&cond);                                                 //signal new task
     pthread_mutex_unlock(&mut);
 }
 
-void *processTask(void* par){                                                   //lipsi, ektelesi kai diagrafi task
+void *processTask(void* par){                                                   //receive, execute and delete task
     TaskQueue *tq = (TaskQueue*)par;
     while (Task* task = tq->nextTask()){
         task->run();
@@ -59,8 +59,8 @@ TaskScheduler::TaskScheduler(int n) : numThreads(n){
     }
 }
 
-TaskScheduler::~TaskScheduler(){                                                //prin tin katastrofi tou TaskScheduler
-    join();                                                                     //perimenoume na ektelestoun ola ta energa threads
+TaskScheduler::~TaskScheduler(){                                                //before destroying TaskScheduler
+    join();                                                                     //wait for every active task to complete execution
     delete [] threads;
 }
 
@@ -70,8 +70,8 @@ void TaskScheduler::addTask(Task *nextTask) {
 
 void TaskScheduler::join(){
     int i;
-	for (i=0; i<numThreads; ++i){                                               //to thread antilambanetai oti theloume na termatistei
-        taskQueue.addTask(NULL);                                                //  otan lavei apo tin oura NULL task
+	for (i=0; i<numThreads; ++i){                                               // thread knows we've terminated it
+        taskQueue.addTask(NULL);                                                // when receives NULL task
     }
 
 	for (i=0; i<numThreads; ++i){
@@ -81,16 +81,35 @@ void TaskScheduler::join(){
 
 void TaskScheduler::barrier(){
     pthread_mutex_lock(&mut);
-    while(completedTasks != addedTasks)                                         //perimenoume mexri na ektelestoun ola ta tasks tou trexontos vimatos (hist, )
+    while(completedTasks != addedTasks)                                         //wait for every task to complete execution
         pthread_cond_wait(&condMain, &mut);
     pthread_mutex_unlock(&mut);
 }
 
-
-dotheJob::dotheJob(string l,Vector<table*> t) : Task(),line(l),tableArray(t) {}
+dotheJob::dotheJob(Vector<string > t,string *psa, int s, int e) : Task(), tableArray(t), partiallySortedArray(psa), startIndex(s), endIndex(e) {}
 
 dotheJob::~dotheJob() {}
 
 void dotheJob::run() {
 
+    /*Bubble Sort*/
+    for(int i=startIndex; i<endIndex-1; i++){
+        for(int j=startIndex; j < (startIndex+(endIndex-i-1)) ; j++){ 
+            if(tableArray[j] > tableArray[j+1]){
+                string temp = tableArray[j];
+                tableArray[j] = tableArray[j+1];
+                tableArray[j+1] = temp;
+            }
+        }
+    }
+
+    for(int i=startIndex;i<endIndex;i++)
+        partiallySortedArray[i] = tableArray[i];
+
+    pthread_mutex_lock(&mut);
+    completedTasks++;                   //every time a task is completed, we increase the completedTasks counter
+    if (completedTasks == addedTasks)
+        pthread_cond_signal(&condMain);
+
+    pthread_mutex_unlock(&mut);
 }
